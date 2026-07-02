@@ -1,0 +1,1076 @@
+openapi: 3.0.4
+info:
+  title: BlastManager Pull API
+  description: API for managing webhooks and pulling data by BlastManager.
+  version: 1.0.0
+
+servers:
+  - url: https://blastmanager.alarms.vimms.no/api/v1
+    description: Production server
+  - url: https://blastmanager-test.alarms.vimms.no/api/v1
+    description: Public test server with dummy data.
+  - url: http://127.0.0.1:8080/api/v1
+    description: Local development server
+
+paths:
+  /companies/{company_code}/tokens/validate:
+    get:
+      summary: Validate API token
+      operationId: Validate_API_Token
+      description: Validate the provided API token.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+      responses:
+        "204":
+          description: Token is valid
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/tokens/revoke:
+    post:
+      summary: Revoke API token
+      operationId: Revoke_API_Token
+      description: Revoke the provided API token.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+      responses:
+        "204":
+          description: Token has been revoked
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+
+  /companies/{company_code}/projects:
+    get:
+      summary: Get a list of projects
+      operationId: Get_Project_List
+      description: Retrieve a list of projects for the specified company.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+      responses:
+        "200":
+          description: A list of projects
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Project_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/projects-count:
+    get:
+      summary: Get project count
+      operationId: Get_Project_Count
+      description: Retrieve the total number of projects for the specified company.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+      responses:
+        "200":
+          description: Project count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+
+  /companies/{company_code}/projects/{project_code}:
+    get:
+      summary: Get project details
+      operationId: Get_Project
+      description: Retrieve details of a specific project.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+      responses:
+        "200":
+          description: Project details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Project_Description"
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+
+  /companies/{company_code}/projects/{project_code}/measurement-points:
+    get:
+      summary: Get a list of measurement points
+      operationId: Get_Measurement_Point_List
+      description: Retrieve a list of measurement points for the specified project.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+        - $ref: '#/components/parameters/Timestamp_From'
+      responses:
+        "200":
+          description: A list of measurement points
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Measurement_Point_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/projects/{project_code}/measurement-points-count:
+    get:
+      summary: Get measurement point count
+      operationId: Get_Measurement_Point_Count
+      description: Retrieve the total number of measurement points for the specified project.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+      responses:
+        "200":
+          description: Measurement point count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+
+  /companies/{company_code}/projects/{project_code}/measurement-points/{mp_code}:
+    get:
+      summary: Get measurement point details
+      operationId: Get_Measurement_Point
+      description: Retrieve details of a specific measurement point.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+      responses:
+        "200":
+          description: List with measurement point details
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Measurement_Point_Description"
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+
+  /companies/{company_code}/projects/{project_code}/measurement-points/{mp_code}/blast-events:
+    get:
+      summary: Get a list of blast events
+      operationId: Get_Blast_Event_List
+      description: Retrieve a list of blast events for the specified measurement point.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+        - $ref: '#/components/parameters/Timestamp_From'
+        - $ref: '#/components/parameters/Timestamp_To'
+      responses:
+        "200":
+          description: A list of blast events
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Blast_Event_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/projects/{project_code}/measurement-points/{mp_code}/blast-events-count:
+    get:
+      summary: Get blast event count
+      operationId: Get_Blast_Event_Count
+      description: Retrieve the total number of blast events for the specified measurement point.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - $ref: '#/components/parameters/Timestamp_From'
+        - $ref: '#/components/parameters/Timestamp_To'
+      responses:
+        "200":
+          description: Blast event count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/webhooks:
+    get:
+      summary: Get a list of webhooks
+      operationId: Get_Webhook_List
+      description: Retrieve a list of webhooks for the specified company.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+      responses:
+        "200":
+          description: Webhook list for company
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/webhooks-count:
+    get:
+      summary: Get webhook count
+      operationId: Get_Webhook_Count
+      description: Retrieve the total number of webhooks for the specified company.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+      responses:
+        "200":
+          description: Webhook count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/webhooks/{webhook_id}:
+    put:
+      summary: Update or create webhook for company.
+      operationId: Update_Or_Create_Webhook
+      description: Creates or overwrite a webhook configuration
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Webhook_ID'
+      responses:
+        "204":
+          description: No errors
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook_Post'
+
+    delete:
+      summary: Delete webhook for company.
+      operationId: Delete_Webhook
+      description: Deletes a webhook configuration
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Webhook_ID'
+      responses:
+        "204":
+          description: No errors
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /companies/{company_code}/webhooks-test/projects/{project_code}:
+    post:
+      tags:
+        - Testing
+      summary: Test project webhook delivery
+      operationId: Test_Project_Webhook
+      description: Trigger a test project_put webhook event for all configured webhooks
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project_Description'
+      responses:
+        "202":
+          description: Test webhook queued for delivery
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+    delete:
+      tags:
+        - Testing
+      summary: Test project delete webhook delivery
+      operationId: Test_Project_Delete_Webhook
+      description: Trigger a test project_delete webhook event for all configured webhooks
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+      responses:
+        "202":
+          description: Test webhook queued for delivery
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /companies/{company_code}/webhooks-test/projects/{project_code}/measurement-points/{mp_code}:
+    post:
+      tags:
+        - Testing
+      summary: Test measurement point webhook delivery
+      operationId: Test_Measurement_Point_Webhook
+      description: Trigger a test measurement_point_put webhook event for all configured webhooks
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Measurement_Point_Description'
+      responses:
+        "202":
+          description: Test webhook queued for delivery
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+    delete:
+      tags:
+        - Testing
+      summary: Test measurement point delete webhook delivery
+      operationId: Test_Measurement_Point_Delete_Webhook
+      description: Trigger a test measurement_point_delete webhook event for all configured webhooks
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+      responses:
+        "202":
+          description: Test webhook queued for delivery
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /companies/{company_code}/webhooks-test/projects/{project_code}/measurement-points/{mp_code}/blast-events/{be_id}:
+    post:
+      tags:
+        - Testing
+      summary: Test blast event webhook delivery
+      operationId: Test_Blast_Event_Webhook
+      description: Trigger a test blast_event_put webhook event for all configured webhooks
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - name: be_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Blast event ID
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blast_Event'
+      responses:
+        "202":
+          description: Test webhook queued for delivery
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+    delete:
+      tags:
+        - Testing
+      summary: Test blast event delete webhook delivery
+      operationId: Test_Blast_Event_Delete_Webhook
+      description: Trigger a test blast_event_delete webhook event for all configured webhooks
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Company_Code'
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - name: be_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Blast event ID to test deletion webhook for
+      responses:
+        "202":
+          description: Test webhook queued for delivery
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+
+components:
+  securitySchemes:
+    X_API_Key_Header:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  schemas:
+    Error_Response:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "An error occurred"
+      required:
+        - error
+
+    Project_Description:
+      type: object
+      properties:
+        company_code:
+          type: string
+        project_code:
+          type: string
+        name:
+          type: string
+        longitude:
+          type: number
+          format: double
+        latitude:
+          type: number
+          format: double
+        project_number:
+          type: string
+      example:
+        company_code: "AAA-AAA"
+        project_code: "AAA-AAA"
+        name: "Store Elvegate, 4514 Mandal"
+        longitude: 7.4529491
+        latitude: 58.0269244
+        project_number: prj-0001
+      required:
+        - company_code
+        - project_code
+        - name
+
+    Project_List_Response:
+      type: object
+      description: Cursor paginated project list.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Project_Description'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+      required:
+        - items
+
+    Measurement_Point_Description:
+      type: object
+      properties:
+        company_code:
+          type: string
+        project_code:
+          type: string
+        mp_code:
+          type: string
+          description: measurement point code
+        name:
+          type: string
+        active_from:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00.123Z"
+        active_to:
+          type: string
+          format: date-time
+          description: optional timestamp specifying when the measurement point is considered no longer active
+          example: "2023-12-31T23:59:59Z.123Z"
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        altitude:
+          type: number
+          format: double
+          description: Height above sea level in meter. This is not always known and could be undefined
+        measurement_point_number:
+          type: string
+          example: "mp-0001"
+        peak_directional_velocity_limit:
+          type: number
+          format: double
+          description: Configured peak velocity limit for the measurement point, can be omitted if nothing was configured.
+      example:
+        company_code: "AAA-AAA"
+        project_code: "AAA-AAA"
+        mp_code: "AAA-AAA"
+        name: "Store Elvegate 11b Øst, 4514 Mandal"
+        active_from: "2023-01-01T00:00:00.123Z"
+        active_to: "2023-12-31T23:59:59Z.123Z"
+        longitude: 8.73733
+        latitude: 58.43363
+        measurement_point_number: "mp-0001"
+        peak_directional_velocity_limit: 15.0
+      required:
+        - company_code
+        - project_code
+        - mp_code
+        - name
+        - active_from
+        - longitude
+        - latitude
+
+    Measurement_Point_List_Response:
+      type: object
+      description: Cursor paginated measurement point list.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Measurement_Point_Description'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+      required:
+        - items
+
+    Blast_Event:
+      type: object
+      properties:
+        company_code:
+          type: string
+        project_code:
+          type: string
+        mp_code:
+          type: string
+          description: measurement point code
+        be_id:
+          type: string
+          description: Unique identifier for the blast event, be aware that non-alphanumeric characters like "|" can be used in the ID.
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00.123Z"
+        peak_directional_velocity:
+          type: number
+          format: double
+          description: Max of longitudal, transverse or vertical for 3d sensors, direction of the sensor for 1d sensors.
+        peak_longitudinal_velocity:
+          type: number
+          format: double
+          description: The peak longitudinal velocity of the event. Might not be from the exact same time as the peak_directional_velocity.
+        peak_transverse_velocity:
+          type: number
+          format: double
+          description: The peak transverse velocity of the event. Might not be from the exact same time as the peak_directional_velocity.
+        peak_vertical_velocity:
+          type: number
+          format: double
+          description: The peak vertical velocity of the event. Might not be from the exact same time as the peak_directional_velocity.
+        dominant_frequency_v:
+          type: number
+          format: double
+          description: Dominant frequency in Hz along the vertical axis when available.
+        dominant_frequency_l:
+          type: number
+          format: double
+          description: Dominant frequency in Hz along the longitudinal axis when available.
+        dominant_frequency_t:
+          type: number
+          format: double
+          description: Dominant frequency in Hz along the transverse axis when available.
+        peak_acceleration_v:
+          type: number
+          format: double
+          description: Peak acceleration for the blast event in m/s^2 along the vertical axis when available.
+        peak_acceleration_l:
+          type: number
+          format: double
+          description: Peak acceleration for the blast event in m/s^2 along the longitudinal axis when available.
+        peak_acceleration_t:
+          type: number
+          format: double
+          description: Peak acceleration for the blast event in m/s^2 along the transverse axis when available.
+      example:
+        company_code: "AAA-AAA"
+        project_code: "AAA-AAA"
+        mp_code: "AAA-AAA"
+        be_id: "490154203237518|1752586384000"
+        timestamp: "2023-01-01T12:00:00.123Z"
+        peak_directional_velocity: 0.3
+        peak_longitudinal_velocity: 0.3
+        peak_transverse_velocity: 0.2
+        peak_vertical_velocity: 0.1
+        dominant_frequency_v: 45.5
+        dominant_frequency_l: 42.0
+        dominant_frequency_t: 47.3
+        peak_acceleration_v: 2.1
+        peak_acceleration_l: 1.8
+        peak_acceleration_t: 2.4
+      required:
+        - company_code
+        - project_code
+        - mp_code
+        - be_id
+        - timestamp
+        - peak_directional_velocity
+
+    Blast_Event_List_Response:
+      type: object
+      description: Cursor paginated blast event list.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Blast_Event'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+      required:
+        - items
+
+    Webhook_Get:
+      type: object
+      properties:
+        company_code:
+          type: string
+          example: "AAA-AAA"
+        url:
+          type: string
+          format: uri
+          maxLength: 8192
+          example: "https://example.org/companies/AAA-AAA"
+        auth_header_name:
+          type: string
+          maxLength: 1024
+          example: "x-api-key"
+        display_name:
+          type: string
+          maxLength: 4096
+          example: "My Webhook"
+        description:
+          type: string
+          maxLength: 8192
+          example: "This webhook is used to receive blast events."
+        enabled:
+          type: boolean
+          example: true
+        retry_config:
+          $ref: '#/components/schemas/Webhook_Retry_Config'
+      required:
+        - company_code
+        - url
+        - auth_header_name
+        - enabled
+        - retry_config
+
+    Webhook_List_Response:
+      type: object
+      description: Cursor paginated webhook list.
+      properties:
+        items:
+            type: array
+            items:
+              $ref: '#/components/schemas/Webhook_Get'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+      required:
+        - items
+
+    Webhook_Post:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 8192
+          example: "https://example.org/companies/AAA-AAA"
+        auth_header_name:
+          type: string
+          maxLength: 1024
+          example: "x-api-key"
+        auth_header_value:
+          type: string
+          maxLength: 4096
+          example: "api-key-value"
+        display_name:
+          type: string
+          maxLength: 4096
+          example: "My Webhook"
+        description:
+          type: string
+          maxLength: 8192
+          example: "This webhook is used to receive blast events."
+        enabled:
+          type: boolean
+          example: true
+        retry_config:
+          $ref: '#/components/schemas/Webhook_Retry_Config'
+      required:
+        - url
+        - auth_header_name
+        - auth_header_value
+        - enabled
+        - retry_config
+
+
+    Webhook_Retry_Config:
+      type: object
+      description: Configuration for retrying failed webhook deliveries (non 2xx responses). The smallest value between initial_delay_ms doubled every retry and max_delay_ms will be used as the delay between retries.
+      properties:
+        max_retries:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 25
+          default: 15
+        initial_delay_ms:
+          type: integer
+          format: int64
+          minimum: 5000
+          maximum: 86400000
+          default: 5000
+        max_delay_ms:
+          type: integer
+          format: int64
+          minimum: 5000
+          maximum: 86400000
+          default: 86400000
+
+
+    Count_Response:
+      type: object
+      description: Generic count response used by *-count endpoints.
+      properties:
+        count:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 42000
+      required:
+        - count
+
+  responses:
+    Unauthorized_Error:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_Response'
+
+    Not_Found_Error:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_Response'
+
+    Too_Many_Requests_Error:
+      description: You are requesting data too fast, please reduce the request rate.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_Response'
+
+    Internal_Server_Error:
+      description: Retry the request after a while, if the error persists for some time contact us.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_Response'
+
+    Service_Temporarily_Unavailable:
+      description: Retry the request after a while, if the error persists for some time contact us. Has a higher chance than 500 internal server error of being a temporary issue.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_Response'
+
+    Bad_Gateway:
+      description: Similar to 503 Service_Temporarily_Unavailable, avoid any assumptions regarding the format of the response body.
+
+  parameters:
+    Company_Code:
+      name: company_code
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "AAA-AAA"
+      description: "A unique identifier for each company."
+
+    Project_Code:
+      name: project_code
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "AAA-AAA"
+      description: "An identifier for each project that is unique within a company."
+
+    Measurement_Point_Code:
+      name: mp_code
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "AAA-AAA"
+      description: "An identifier for each measurement point that is unique within a project."
+
+    Webhook_ID:
+      name: webhook_id
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+        example: "production"
+      description: You can use production, staging, dev etc.. for this or some random value like uuidv4. This doesn't need to be unique across companies.
+    
+    Pagination_Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 10000
+        default: 10000
+      description: The maximum number of items to return in the responses.
+
+    Pagination_Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: The cursor to use for keyset pagination. Omit to start from the beginning.
+
+    Timestamp_From:
+      name: from
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: "2023-01-01T12:00:00.123Z"
+      description: Inclusive lower bound (items with timestamp >= this value). Omit to start from the earliest available item.
+
+    Timestamp_To:
+      name: to
+      in: query
+      required: false
+      schema:
+        type: string
+        format: date-time
+        example: "2024-01-01T12:00:00.123Z"
+      description: Exclusive upper bound (items with timestamp < this value). Omit for an open-ended range.

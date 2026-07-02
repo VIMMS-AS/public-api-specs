@@ -1,0 +1,363 @@
+openapi: 3.0.4
+info:
+  title: Blastmanager Push API
+  description: >-
+    BlastManager-side API that the webhooks point to. Webhooks may be delivered
+    out of order because of concurrent processing; consumers should use the
+    X-Vimms-Event-Timestamp header to apply events in the correct sequence.
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8081/companies/AAA-AAA
+    description: Local development server
+
+paths:
+  /projects/{project_code}:
+    put:
+      summary: Project update or creation
+      operationId: Update_Or_Create_Project
+      description: Called when a project is updated or created.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/X_Vimms_Event_Timestamp'
+      responses:
+        "204":
+          description: No errors
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Project_Description'
+
+    delete:
+      summary: Project deletion
+      operationId: Delete_Project
+      description: Called when a project is deleted.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/X_Vimms_Event_Timestamp'
+      responses:
+        "204":
+          description: No errors
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+
+  /projects/{project_code}/measurement-points/{mp_code}:
+    put:
+      summary: Measurement point update or creation
+      operationId: Update_Or_Create_Measurement_Point
+      description: Called when a measurement point is updated or created.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - $ref: '#/components/parameters/X_Vimms_Event_Timestamp'
+      responses:
+        "204":
+          description: No errors
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Measurement_Point_Description'
+
+    delete:
+      summary: Measurement point deletion
+      operationId: Delete_Measurement_Point
+      description: Called when a measurement point is deleted.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - $ref: '#/components/parameters/X_Vimms_Event_Timestamp'
+      responses:
+        "204":
+          description: No errors
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+
+  /projects/{project_code}/measurement-points/{mp_code}/blast-events/{be_id}:
+    put:
+      summary: Blast event update or creation
+      operationId: Update_Or_Create_Blast_Event
+      description: Called when a blast event is updated or created.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - $ref: '#/components/parameters/Blast_Event_BE_ID'
+        - $ref: '#/components/parameters/X_Vimms_Event_Timestamp'
+      responses:
+        "204":
+          description: No errors
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Blast_Event'
+
+    delete:
+      summary: Blast event deletion
+      operationId: Delete_Blast_Event
+      description: Called when a blast event is deleted.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Project_Code'
+        - $ref: '#/components/parameters/Measurement_Point_Code'
+        - $ref: '#/components/parameters/Blast_Event_BE_ID'
+        - $ref: '#/components/parameters/X_Vimms_Event_Timestamp'
+      responses:
+        "204":
+          description: No errors
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+
+components:
+  securitySchemes:
+    X_API_Key_Header:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  schemas:
+    Error_Response:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "An error occurred"
+      required:
+        - error
+
+    Project_Description:
+      type: object
+      properties:
+        company_code:
+          type: string
+        project_code:
+          type: string
+        name:
+          type: string
+        longitude:
+          type: number
+          format: double
+        latitude:
+          type: number
+          format: double
+        project_number:
+          type: string
+      example:
+        company_code: "AAA-AAA"
+        project_code: "AAA-AAA"
+        name: "Store Elvegate, 4514 Mandal"
+        longitude: 7.4529491
+        latitude: 58.0269244
+        project_number: prj-0001
+        updated_at: "2025-10-30T12:34:56.123456Z"
+      required:
+        - company_code
+        - project_code
+        - name
+
+    Measurement_Point_Description:
+      type: object
+      properties:
+        company_code:
+          type: string
+        project_code:
+          type: string
+        mp_code:
+          type: string
+          description: measurement point code
+        name:
+          type: string
+        active_from:
+          type: string
+          format: date-time
+          example: "2023-01-01T00:00:00.123Z"
+        active_to:
+          type: string
+          format: date-time
+          description: optional timestamp specifying when the measurement point is considered no longer active
+          example: "2023-12-31T23:59:59Z.123Z"
+        latitude:
+          type: number
+          format: double
+        longitude:
+          type: number
+          format: double
+        altitude:
+          type: number
+          format: double
+          description: Height above sea level in meter. This is not always known and could be undefined
+        measurement_point_number:
+          type: string
+          example: "mp-0001"
+        peak_directional_velocity_limit:
+          type: number
+          format: double
+          description: Configured peak velocity limit for the measurement point, can be omitted if nothing was configured.
+      example:
+        company_code: "AAA-AAA"
+        project_code: "AAA-AAA"
+        mp_code: "AAA-AAA"
+        name: "Store Elvegate 11b Øst, 4514 Mandal"
+        active_from: "2023-01-01T00:00:00.123Z"
+        active_to: "2023-12-31T23:59:59Z.123Z"
+        longitude: 8.73733
+        latitude: 58.43363
+        measurement_point_number: "mp-0001"
+        peak_directional_velocity_limit: 15.0
+      required:
+        - company_code
+        - project_code
+        - mp_code
+        - name
+        - active_from
+        - longitude
+        - latitude
+
+    Blast_Event:
+      type: object
+      properties:
+        company_code:
+          type: string
+        project_code:
+          type: string
+        mp_code:
+          type: string
+          description: measurement point code
+        be_id:
+          type: string
+          description: Unique identifier for the blast event, be aware that non-alphanumeric characters like "|" can be used in the ID.
+        timestamp:
+          type: string
+          format: date-time
+          example: "2023-01-01T12:00:00.123Z"
+        peak_directional_velocity:
+          type: number
+          format: double
+          description: Max of longitudal, transverse or vertical for 3d sensors, direction of the sensor for 1d sensors.
+        peak_longitudinal_velocity:
+          type: number
+          format: double
+          description: The peak longitudinal velocity of the event. Might not be from the exact same time as the peak_directional_velocity.
+        peak_transverse_velocity:
+          type: number
+          format: double
+          description: The peak transverse velocity of the event. Might not be from the exact same time as the peak_directional_velocity.
+        peak_vertical_velocity:
+          type: number
+          format: double
+          description: The peak vertical velocity of the event. Might not be from the exact same time as the peak_directional_velocity.
+        dominant_frequency_v:
+          type: number
+          format: double
+          description: Dominant frequency in Hz along the vertical axis when available.
+        dominant_frequency_l:
+          type: number
+          format: double
+          description: Dominant frequency in Hz along the longitudinal axis when available.
+        dominant_frequency_t:
+          type: number
+          format: double
+          description: Dominant frequency in Hz along the transverse axis when available.
+        peak_acceleration_v:
+          type: number
+          format: double
+          description: Peak acceleration for the blast event in m/s^2 along the vertical axis when available.
+        peak_acceleration_l:
+          type: number
+          format: double
+          description: Peak acceleration for the blast event in m/s^2 along the longitudinal axis when available.
+        peak_acceleration_t:
+          type: number
+          format: double
+          description: Peak acceleration for the blast event in m/s^2 along the transverse axis when available.
+      example:
+        company_code: "AAA-AAA"
+        project_code: "AAA-AAA"
+        mp_code: "AAA-AAA"
+        be_id: "490154203237518|1752586384000"
+        timestamp: "2023-01-01T12:00:00.123Z"
+        peak_directional_velocity: 0.3
+        peak_longitudinal_velocity: 0.3
+        peak_transverse_velocity: 0.2
+        peak_vertical_velocity: 0.1
+        dominant_frequency_v: 45.5
+        dominant_frequency_l: 42.0
+        dominant_frequency_t: 47.3
+        peak_acceleration_v: 2.1
+        peak_acceleration_l: 1.8
+        peak_acceleration_t: 2.4
+      required:
+        - company_code
+        - project_code
+        - mp_code
+        - be_id
+        - timestamp
+        - peak_directional_velocity
+
+  responses:
+    Too_Many_Requests_Error:
+      description: Too many requests
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error_Response'
+
+  parameters:
+    X_Vimms_Event_Timestamp:
+      name: X-Vimms-Event-Timestamp
+      in: header
+      required: true
+      schema:
+        type: string
+        format: date-time
+        example: "2025-10-30T12:34:56.123456Z"
+      description: >-
+        Event timestamp for ordering.
+
+    Project_Code:
+      name: project_code
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "AAA-AAA"
+      description: An identifier for each project that is unique within a company.
+
+    Measurement_Point_Code:
+      name: mp_code
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "AAA-AAA"
+      description: An identifier for each measurement point that is unique within a project.
+
+    Blast_Event_BE_ID:
+      name: be_id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "358299840277327|1755072553172"
+      description: Unique blast event identifier.

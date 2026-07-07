@@ -9,40 +9,11 @@ servers:
     description: Local development server
 
 paths:
-  /triggered-data/{triggered_data_id}:
-    get:
-      summary: Get triggered data by ID
-      operationId: Get_Triggered_Data
-      description: Retrieve a specific NCVIBJson TriggeredData object using an ID.
-      security:
-        - X_API_Key_Header: []
-      parameters:
-        - $ref: '#/components/parameters/Triggered_Data_ID'
-      responses:
-        "200":
-          description: Successful retrieval of triggered data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/TriggeredData'
-        "401":
-          $ref: '#/components/responses/Unauthorized_Error'
-        "404":
-          $ref: '#/components/responses/Not_Found_Error'
-        "429":
-          $ref: '#/components/responses/Too_Many_Requests_Error'
-        "500":
-          $ref: '#/components/responses/Internal_Server_Error'
-        "502":
-          $ref: '#/components/responses/Bad_Gateway'
-        "503":
-          $ref: '#/components/responses/Service_Temporarily_Unavailable'
-
   /webhooks:
     get:
       summary: Get a list of webhooks
       operationId: Get_Webhook_List
-      description: Retrieve a list of webhooks.
+      description: Retrieve a list of webhooks in all logger groups.
       security:
         - X_API_Key_Header: []
       parameters:
@@ -72,7 +43,7 @@ paths:
     get:
       summary: Get webhook count
       operationId: Get_Webhook_Count
-      description: Retrieve the total number of webhooks.
+      description: Retrieve the total number of webhooks in all logger groups.
       security:
         - X_API_Key_Header: []
       responses:
@@ -95,24 +66,22 @@ paths:
         "503":
           $ref: '#/components/responses/Service_Temporarily_Unavailable'
 
-  /webhooks/{webhook_id}:
-    put:
-      summary: Update or create webhook.
-      operationId: Update_Or_Create_Webhook
-      description: Creates or overwrites a webhook configuration.
+  /triggered-data/{triggered_data_id}:
+    get:
+      summary: Get triggered data by ID
+      operationId: Get_Triggered_Data
+      description: Retrieve a specific NCVIBJson TriggeredData object using an ID.
       security:
         - X_API_Key_Header: []
       parameters:
-        - $ref: '#/components/parameters/Webhook_ID'
-      requestBody:
-        required: true
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/Webhook_Post'
+        - $ref: '#/components/parameters/Triggered_Data_ID'
       responses:
-        "204":
-          description: No errors
+        "200":
+          description: Successful retrieval of triggered data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggeredData'
         "401":
           $ref: '#/components/responses/Unauthorized_Error'
         "404":
@@ -126,17 +95,69 @@ paths:
         "503":
           $ref: '#/components/responses/Service_Temporarily_Unavailable'
 
-    delete:
-      summary: Delete webhook.
-      operationId: Delete_Webhook
-      description: Deletes a webhook configuration.
+  # --- LOGGER GROUPS ---
+  /logger-groups:
+    get:
+      summary: Get a list of logger groups
+      operationId: Get_Logger_Group_List
       security:
         - X_API_Key_Header: []
       parameters:
-        - $ref: '#/components/parameters/Webhook_ID'
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+      responses:
+        "200":
+          description: Successful retrieval of logger groups
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Logger_Group_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /logger-groups/{logger_group_id}:
+    put:
+      summary: Create or update a logger group
+      description: |
+        Creates a logger group with the specified client-defined `logger_group_id`. 
+        If a group with this ID already exists, it updates its description.
+      operationId: Create_Or_Update_Logger_Group
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Logger_Group_Input'
+      responses:
+        "201":
+          description: Logger group successfully created with the specified ID
+        "204":
+          description: Logger group updated successfully
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+    delete:
+      summary: Delete a logger group
+      operationId: Delete_Logger_Group
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
       responses:
         "204":
-          description: No errors
+          description: Logger group deleted successfully
         "401":
           $ref: '#/components/responses/Unauthorized_Error'
         "404":
@@ -145,10 +166,207 @@ paths:
           $ref: '#/components/responses/Too_Many_Requests_Error'
         "500":
           $ref: '#/components/responses/Internal_Server_Error'
-        "502":
-          $ref: '#/components/responses/Bad_Gateway'
-        "503":
-          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /logger-groups/{logger_group_id}/loggers/{logger_id}:
+    put:
+      summary: Add a logger to a logger group
+      description: |
+        Assigns a logger to a logger group. Since loggers can belong to multiple groups 
+        simultaneously, this adds a new association without removing any existing group assignments.
+      operationId: Assign_Logger_To_Group
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
+        - $ref: '#/components/parameters/Logger_ID'
+      responses:
+        "204":
+          description: Logger successfully assigned to the group
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+    delete:
+      summary: Remove a logger from a logger group
+      description: |
+        Breaks the association between a specific logger and a logger group. 
+        The logger and group resources themselves remain intact.
+      operationId: Remove_Logger_From_Group
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
+        - $ref: '#/components/parameters/Logger_ID'
+      responses:
+        "204":
+          description: Logger successfully unassigned from the group
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  # --- GROUP-SPECIFIC WEBHOOKS ---
+  /logger-groups/{logger_group_id}/webhooks:
+    get:
+      summary: Get webhooks assigned to a logger group
+      operationId: Get_Group_Webhook_List
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+      responses:
+        "200":
+          description: Webhook list for the specified group
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /logger-groups/{logger_group_id}/webhooks-count:
+    get:
+      summary: Get webhook count for a logger group
+      operationId: Get_Group_Webhook_Count
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
+      responses:
+        "200":
+          description: Webhook count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /logger-groups/{logger_group_id}/webhooks/{webhook_id}:
+    put:
+      summary: Update or create a webhook configuration for a logger group
+      operationId: Update_Or_Create_Group_Webhook
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
+        - $ref: '#/components/parameters/Webhook_ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook_Post'
+      responses:
+        "204":
+          description: Webhook successfully saved
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+    delete:
+      summary: Delete a webhook configuration from a logger group
+      operationId: Delete_Group_Webhook
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_Group_ID'
+        - $ref: '#/components/parameters/Webhook_ID'
+      responses:
+        "204":
+          description: Webhook successfully deleted
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  # --- HARDWARE ASSET MANAGEMENT ---
+  /loggers:
+    get:
+      summary: Get a list of all loggers
+      operationId: Get_Logger_List
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - name: logger_group_id
+          in: query
+          required: false
+          description: Optional filter to return loggers belonging to a specific group.
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+      responses:
+        "200":
+          description: List of loggers
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Logger_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /loggers/{logger_id}/sensors:
+    get:
+      summary: Get all sensors attached to a specific logger
+      operationId: Get_Logger_Sensors
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Logger_ID'
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+      responses:
+        "200":
+          description: List of sensors connected to this logger
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Sensor_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
 
 
 components:
@@ -159,9 +377,131 @@ components:
       name: x-api-key
 
   schemas:
+    Logger_Group_Input:
+      type: object
+      properties:
+        description:
+          type: string
+          example: "Loggers monitoring structural vibration near the north exit."
+          description: Optional context or notes regarding this specific logger group.
+
+    Logger_Group:
+      type: object
+      required:
+        - id
+      properties:
+        id:
+          type: string
+          example: "tunnel-north-zone"
+          description: The client-defined unique identifier passed during PUT registration.
+        description:
+          type: string
+          example: "Loggers monitoring structural vibration near the north exit."
+          nullable: true
+
+    Logger_Group_List_Response:
+      type: object
+      description: Cursor paginated logger group list.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Logger_Group'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+
+    Logger:
+      type: object
+      required:
+        - id
+        - company
+        - loggerType
+        - loggerSerialNumber
+      properties:
+        id:
+          type: string
+          example: "logger-vimm-358299"
+        company:
+          type: string
+          example: "VIMMS"
+        loggerType:
+          type: string
+          example: "VIMMS-LTE-v2"
+        loggerSerialNumber:
+          type: integer
+          example: 358299842
+        loggerGroupIds:
+          type: array
+          items:
+            type: string
+          example: ["norway-all", "tunnel-north-zone"]
+          description: The group IDs this logger currently belongs to.
+
+    Logger_List_Response:
+      type: object
+      description: Cursor paginated logger asset list.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Logger'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+
+    Sensor:
+      type: object
+      required:
+        - id
+        - sensorType
+        - sensorSerialNumber
+        - loggerId
+      properties:
+        id:
+          type: string
+          example: "sensor-accel-17834"
+        sensorType:
+          type: string
+          example: "Triaxial Accelerometer"
+        sensorSerialNumber:
+          type: integer
+          example: 178340744
+        loggerId:
+          type: string
+          example: "logger-vimm-358299"
+          description: The parent logger resource managing this sensor configuration.
+
+    Sensor_List_Response:
+      type: object
+      description: Cursor paginated sensor list attached to a logger.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Sensor'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+
     Webhook_Get:
       type: object
       properties:
+        id:
+          type: string
+          maxLength: 128
+          example: "production-alerts"
+          description: The unique identifier for the webhook configuration within this logger group.
+        logger_group_id:
+          type: string
+          example: "tunnel-north-zone"
+          description: The ID of the logger group this webhook belongs to.
         url:
           type: string
           format: uri
@@ -185,6 +525,8 @@ components:
         retry_config:
           $ref: '#/components/schemas/Webhook_Retry_Config'
       required:
+        - id
+        - logger_group_id
         - url
         - auth_header_name
         - enabled
@@ -683,6 +1025,25 @@ components:
         example: "VIMMS|358299840273268|0|1783407441315"
       description: An ID of the triggered data event.
 
+    Logger_Group_ID:
+      name: logger_group_id
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+        example: "tunnel-north-zone"
+      description: A client-defined unique text/string identifier for the logger group.
+
+    Logger_ID:
+      name: logger_id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "logger-vimm-358299"
+      description: Unique text identifier representing a physical logger device.
+
     Webhook_ID:
       name: webhook_id
       in: path
@@ -691,7 +1052,7 @@ components:
         type: string
         maxLength: 128
         example: "production"
-      description: You can use production, staging, dev etc.. for this or some random value like uuidv4.
+      description: A unique identifier for the webhook configuration bounded strictly inside this specific logger group.
 
     Pagination_Limit:
       name: limit
@@ -703,7 +1064,7 @@ components:
         minimum: 1
         maximum: 10000
         default: 10000
-      description: The maximum number of items to return in the response.
+      description: The maximum number of items to return in the response page.
 
     Pagination_Cursor:
       name: cursor
@@ -711,4 +1072,4 @@ components:
       required: false
       schema:
         type: string
-      description: The cursor to use for keyset pagination. Omit to start from the beginning.
+      description: The cursor token string used for keyset pagination. Omit to start from the beginning.

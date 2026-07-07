@@ -1,0 +1,66 @@
+openapi: 3.0.4
+info:
+  title: NCVIBJson-based Push API
+  description: Implemented by webhook handlers that get registered in the NCVIBJson-based Pull API. Change the value of components/securitySchemes/X_API_Key_Header/name in this schema if you had to use a different header name.
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8081/api/v1
+    description: Local development server
+
+paths:
+  /triggered-data/{triggered_data_id}:
+    put:
+      summary: Update or submit triggered data
+      description: Receives the triggered data reference via a webhook push.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Triggered_Data_ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TriggeredDataReference'
+      responses:
+        '200':
+          description: Data processed successfully.
+        '204':
+          description: Data processed successfully with no content returned.
+        '401':
+          description: Unauthorized. Missing or invalid API key.
+        '404':
+          description: Triggered data ID not found.
+
+components:
+  securitySchemes:
+    X_API_Key_Header:
+      type: apiKey
+      in: header
+      name: x-api-key
+  
+  schemas:
+    TriggeredDataReference:
+      type: object
+      description: Identifies the TriggeredData event that triggered the webhook.
+      properties:
+        url:
+          type: string
+          format: uri
+          example: "http://127.0.0.1:8080/api/v1/triggered-data/VIMMS%7C358299840273268%7C0%7C1783407441315"
+        hashId:
+          type: string
+          example: "VIMMS|358299840273268|0|1783407441315"
+      required:
+        - url
+
+  parameters:
+    Triggered_Data_ID:
+      name: triggered_data_id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "VIMMS|358299840273268|0|1783407441315"
+      description: An ID of the triggered data event.

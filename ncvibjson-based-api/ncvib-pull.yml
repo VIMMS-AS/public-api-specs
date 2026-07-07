@@ -1,0 +1,714 @@
+openapi: 3.0.4
+info:
+  title: NCVIBJson-based Pull API
+  description: API for managing webhooks and pulling data serialized as NCVIBJson
+  version: 1.0.0
+
+servers:
+  - url: http://127.0.0.1:8080/api/v1
+    description: Local development server
+
+paths:
+  /triggered-data/{triggered_data_id}:
+    get:
+      summary: Get triggered data by ID
+      operationId: Get_Triggered_Data
+      description: Retrieve a specific NCVIBJson TriggeredData object using an ID.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Triggered_Data_ID'
+      responses:
+        "200":
+          description: Successful retrieval of triggered data
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggeredData'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /webhooks:
+    get:
+      summary: Get a list of webhooks
+      operationId: Get_Webhook_List
+      description: Retrieve a list of webhooks.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+      responses:
+        "200":
+          description: Webhook list
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Webhook_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /webhooks-count:
+    get:
+      summary: Get webhook count
+      operationId: Get_Webhook_Count
+      description: Retrieve the total number of webhooks.
+      security:
+        - X_API_Key_Header: []
+      responses:
+        "200":
+          description: Webhook count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /webhooks/{webhook_id}:
+    put:
+      summary: Update or create webhook.
+      operationId: Update_Or_Create_Webhook
+      description: Creates or overwrites a webhook configuration.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Webhook_ID'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Webhook_Post'
+      responses:
+        "204":
+          description: No errors
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+    delete:
+      summary: Delete webhook.
+      operationId: Delete_Webhook
+      description: Deletes a webhook configuration.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - $ref: '#/components/parameters/Webhook_ID'
+      responses:
+        "204":
+          description: No errors
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "404":
+          $ref: '#/components/responses/Not_Found_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+        "502":
+          $ref: '#/components/responses/Bad_Gateway'
+        "503":
+          $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+
+components:
+  securitySchemes:
+    X_API_Key_Header:
+      type: apiKey
+      in: header
+      name: x-api-key
+
+  schemas:
+    Webhook_Get:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 8192
+          example: "https://example.org/webhook"
+        auth_header_name:
+          type: string
+          maxLength: 1024
+          example: "x-api-key"
+        display_name:
+          type: string
+          maxLength: 4096
+          example: "My Webhook"
+        description:
+          type: string
+          maxLength: 8192
+          example: "This webhook is used to receive triggered data."
+        enabled:
+          type: boolean
+          example: true
+        retry_config:
+          $ref: '#/components/schemas/Webhook_Retry_Config'
+      required:
+        - url
+        - auth_header_name
+        - enabled
+        - retry_config
+
+    Webhook_List_Response:
+      type: object
+      description: Cursor paginated webhook list.
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/Webhook_Get'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+      required:
+        - items
+
+    Webhook_Post:
+      type: object
+      properties:
+        url:
+          type: string
+          format: uri
+          maxLength: 8192
+          example: "https://example.org/webhook"
+        auth_header_name:
+          type: string
+          maxLength: 1024
+          example: "x-api-key"
+        auth_header_value:
+          type: string
+          maxLength: 4096
+          example: "api-key-value"
+        display_name:
+          type: string
+          maxLength: 4096
+          example: "My Webhook"
+        description:
+          type: string
+          maxLength: 8192
+          example: "This webhook is used to receive triggered data."
+        enabled:
+          type: boolean
+          example: true
+        retry_config:
+          $ref: '#/components/schemas/Webhook_Retry_Config'
+      required:
+        - url
+        - auth_header_name
+        - auth_header_value
+        - enabled
+        - retry_config
+
+    Webhook_Retry_Config:
+      type: object
+      description: Configuration for retrying failed webhook deliveries (non 2xx responses). The smallest value between initial_delay_ms doubled every retry and max_delay_ms will be used as the delay between retries.
+      properties:
+        max_retries:
+          type: integer
+          format: int64
+          minimum: 0
+          maximum: 25
+          default: 15
+        initial_delay_ms:
+          type: integer
+          format: int64
+          minimum: 5000
+          maximum: 86400000
+          default: 5000
+        max_delay_ms:
+          type: integer
+          format: int64
+          minimum: 5000
+          maximum: 86400000
+          default: 86400000
+
+    Count_Response:
+      type: object
+      description: Generic count response used by *-count endpoints.
+      properties:
+        count:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 42000
+      required:
+        - count
+
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+          example: "An error occurred"
+      required:
+        - error
+
+    TriggeredData:
+      type: object
+      required:
+        - formatVersion
+        - hashId
+        - instrumentDefinition
+        - measuredQuantity
+        - measuredUnit
+        - startTime
+        - sampleRate
+        - sampleUnits
+        - samples
+      properties:
+        formatVersion:
+          type: string
+          example: "2.0"
+          enum:
+            - "2.0"
+          description: The format version of the triggered data definition
+        hashId:
+          type: string
+          example: "VIMMS|358299840273268|0|1783407441315"
+        instrumentDefinition:
+          $ref: '#/components/schemas/InstrumentDefinition'
+        port:
+          type: integer
+          description: Port number used for measurements
+          default: 0
+          nullable: true
+        coordinates:
+          $ref: "#/components/schemas/Coordinates"
+        battery:
+          type: string
+          description: Battery status or level
+          nullable: true
+        temperature:
+          type: string
+          description: Temperature reading
+          nullable: true
+        overload:
+          type: boolean
+          description: Whether the sensor experienced an overload condition
+          nullable: true
+        filteredSamples:
+          type: boolean
+          description: Whether the samples have been filtered
+        standard:
+          $ref: '#/components/schemas/Standard'
+        measuredQuantity:
+          $ref: "#/components/schemas/MeasuredQuantityType"
+        measuredUnit:
+          type: string
+          description: Unit of the measured quantity
+        measuredMaxValue:
+          type: array
+          items:
+            type: number
+          description: Maximum values of measurements
+          default: []
+        peakParticleVelocity:
+          type: array
+          items:
+            type: number
+          description: Peak particle velocity values
+          default: []
+        vectorPeakParticleVelocity:
+          type: number
+          description: Vector peak particle velocity
+          nullable: true
+        peakParticleVelocityUnit:
+          type: string
+          description: Unit for peak particle velocity
+          default: mm/s
+          nullable: true
+        peakParticleAcceleration:
+          type: array
+          items:
+            type: number
+          description: Peak particle acceleration values
+          default: []
+        peakParticleAccelerationUnit:
+          type: string
+          description: Unit for peak particle acceleration
+          default: mm/s^2
+          nullable: true
+        peakParticleDisplacement:
+          type: array
+          items:
+            type: number
+          description: Peak particle displacement values
+          default: []
+        peakParticleDisplacementUnit:
+          type: string
+          description: Unit for peak particle displacement
+          default: mm
+          nullable: true
+        zeroCuttingFrequencyVelocity:
+          type: array
+          items:
+            type: number
+          description: Zero cutting frequency for velocity
+          default: []
+        zeroCuttingFrequencyVelocityUnit:
+          type: string
+          description: Unit for zero cutting frequency velocity
+          default: Hz
+          nullable: true
+        zeroCuttingFrequencyAcceleration:
+          type: array
+          items:
+            type: number
+          description: Zero cutting frequency for acceleration
+          default: []
+        zeroCuttingFrequencyAccelerationUnit:
+          type: string
+          description: Unit for zero cutting frequency acceleration
+          default: Hz
+          nullable: true
+        measuresSound:
+          type: boolean
+          description: measures sound
+          nullable: true
+        measuresVibration:
+          type: boolean
+          description: measures vibration
+          nullable: true
+        measuresAnythingButSoundOrVibration:
+          type: boolean
+          description: measures anything except sound or vibration
+          nullable: true
+        soundLevelMax:
+          type: number
+          description: maximum sound level
+          nullable: true
+        vibrationLevelMax:
+          type: number
+          description: maximum vibration level
+          nullable: true
+        soundLevelAverage:
+          type: number
+          description: sound level average
+          nullable: true
+        vibrationLevelTop10:
+          type: number
+          description: vibration level top 10
+          nullable: true
+        timeZone:
+          type: string
+          description: IANA time zone identifier for the instrument (null means time is to be treated as is - aka local time)
+          default: "null"
+          nullable: true
+        startTime:
+          type: string
+          format: date-time
+          description: Start time of the measurements
+        sampleRate:
+          type: number
+          description: Rate at which samples are taken
+        numberOfPreTriggerSamples:
+          type: integer
+          description: Number of samples recorded before the trigger event
+        axes:
+          type: array
+          items:
+            $ref: '#/components/schemas/Axis'
+          description: Axes of measurement
+          default: []
+        transformationMatrix:
+          type: array
+          items:
+            type: number
+          description: Matrix for coordinate transformation
+          default: []
+        triggerLevel:
+          type: array
+          items:
+            type: number
+          description: Trigger level values
+          default: []
+        triggerLevelUnit:
+          type: string
+          description: Unit for trigger level values
+          nullable: true
+        maxSamples:
+          type: array
+          items:
+            $ref: "#/components/schemas/SampleItem"
+          description: Maximum sample values
+          default: []
+        sampleUnits:
+          type: array
+          items:
+            type: string
+          description: Units for the samples
+          default: []
+        samples:
+          type: array
+          items:
+            type: array
+            items:
+              type: number
+          description: Collection of measurement samples
+          default: []
+
+    MeasuredQuantityType:
+      type: string
+      enum:
+        - Velocity
+        - Acceleration
+        - Displacement
+        - Voltage
+        - SoundPressure
+        - SoundIntensity
+        - SoundLevel
+        - VibrationLevel
+        - Unknown
+      description: Types of physical quantities that can be measured
+
+    SampleItem:
+      type: object
+      required:
+        - axis
+        - quantity
+        - unit
+      properties:
+        axis:
+          $ref: '#/components/schemas/Axis'
+        quantity:
+          type: string
+          enum:
+            - Velocity
+            - Acceleration
+            - Displacement
+            - Voltage
+            - SoundPressure
+            - SoundIntensity
+            - SoundLevel
+            - VibrationLevel
+            - Unknown
+          description: Physical quantity being measured
+        unit:
+          type: string
+          description: Unit of measurement
+        value:
+          type: array
+          items:
+            type: number
+          description: Sample values
+          default: []
+        timeOffsetInSeconds:
+          type: number
+          nullable: true
+          description: Time offset in seconds
+      example:
+        axis: "V"
+        quantity: "Acceleration"
+        unit: "m/s^2"
+        value: [0.005]
+        timeOffsetInSeconds: 0.01
+      additionalProperties: false
+    
+    Axis:
+      description: Defines the axis orientation (N=None, V=Vertical, L=Longitudinal,T=Horizontal/Transverse)
+      type: string
+      enum:
+        - V
+        - L
+        - T
+        - N
+        - Vertical
+        - Longitudinal
+        - Transversal
+        - None
+
+    Coordinates:
+      description: Geographic coordinates with optional elevation
+      type: object
+      nullable: true
+      properties:
+        longitude:
+          type: number
+          description: Longitude in decimal degrees
+        latitude:
+          type: number
+          description: Latitude in decimal degrees
+        elevationInMeters:
+          type: number
+          description: Elevation in meters above sea level
+          nullable: true
+      required:
+        - longitude
+        - latitude
+      additionalProperties: false
+
+    Standard:
+      description: Standard the data is fitted against
+      type: object
+      nullable: true
+      properties:
+        name:
+          type: string
+          description: "One of (NoFilter, NS 8141-1:2022, SS 4604866:2011)"
+        filterDefinition:
+          type: object
+          description: "The unexact lowpass and highpass frequencies for the standard as defined in: https://github.com/ncvib/NcvibJson/blob/aa61c75/NcvibJson/Common/Standards/V2_0/standards.schema.2.0.json"
+          properties:
+            lowPass:
+              type: integer
+            highPass:
+              type: integer
+          required:
+            - lowPass
+            - highPass
+      required:
+        - name
+        - filterDefinition
+
+    InstrumentDefinition:
+      description: Defines an instrument with its company, type, and serial numbers
+      type: object
+      required:
+        - formatVersion
+        - company
+        - sensorType
+        - sensorSerialNumber
+      properties:
+        formatVersion:
+          type: string
+          pattern: '^2\.0$'
+          example: "2.0"
+          description: The format version of the instrument definition
+        company:
+          type: string
+          description: The company that manufactured the instrument
+        loggerType:
+          type: string
+          description: The type or model of the logger
+          nullable: true
+        sensorType:
+          type: string
+          description: The type or model of the sensor
+        loggerSerialNumber:
+          type: integer
+          description: The serial number of the logger
+          nullable: true
+        sensorSerialNumber:
+          type: integer
+          description: The serial number of the sensor
+      additionalProperties: false
+
+  responses:
+    Unauthorized_Error:
+      description: Unauthorized access
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Not_Found_Error:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Too_Many_Requests_Error:
+      description: You are requesting data too fast, please reduce the request rate.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Internal_Server_Error:
+      description: Retry the request after a while, if the error persists for some time contact us.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Service_Temporarily_Unavailable:
+      description: Retry the request after a while, if the error persists for some time contact us. Has a higher chance than 500 internal server error of being a temporary issue.
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+
+    Bad_Gateway:
+      description: Similar to 503 Service_Temporarily_Unavailable, avoid any assumptions regarding the format of the response body.
+
+  parameters:
+    Triggered_Data_ID:
+      name: triggered_data_id
+      in: path
+      required: true
+      schema:
+        type: string
+        example: "VIMMS|358299840273268|0|1783407441315"
+      description: An ID of the triggered data event.
+
+    Webhook_ID:
+      name: webhook_id
+      in: path
+      required: true
+      schema:
+        type: string
+        maxLength: 128
+        example: "production"
+      description: You can use production, staging, dev etc.. for this or some random value like uuidv4.
+
+    Pagination_Limit:
+      name: limit
+      in: query
+      required: false
+      schema:
+        type: integer
+        format: int64
+        minimum: 1
+        maximum: 10000
+        default: 10000
+      description: The maximum number of items to return in the response.
+
+    Pagination_Cursor:
+      name: cursor
+      in: query
+      required: false
+      schema:
+        type: string
+      description: The cursor to use for keyset pagination. Omit to start from the beginning.

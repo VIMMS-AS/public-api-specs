@@ -167,7 +167,7 @@ paths:
         "500":
           $ref: '#/components/responses/Internal_Server_Error'
 
-  /logger-groups/{logger_group_id}/loggers/{logger_id}:
+  /logger-groups/{logger_group_id}/loggers/{logger_serial_number}:
     put:
       summary: Add a logger to a logger group
       description: |
@@ -178,7 +178,7 @@ paths:
         - X_API_Key_Header: []
       parameters:
         - $ref: '#/components/parameters/Logger_Group_ID'
-        - $ref: '#/components/parameters/Logger_ID'
+        - $ref: '#/components/parameters/Logger_Serial_Number'
       responses:
         "204":
           description: Logger successfully assigned to the group
@@ -201,7 +201,7 @@ paths:
         - X_API_Key_Header: []
       parameters:
         - $ref: '#/components/parameters/Logger_Group_ID'
-        - $ref: '#/components/parameters/Logger_ID'
+        - $ref: '#/components/parameters/Logger_Serial_Number'
       responses:
         "204":
           description: Logger successfully unassigned from the group
@@ -342,14 +342,14 @@ paths:
         "500":
           $ref: '#/components/responses/Internal_Server_Error'
 
-  /loggers/{logger_id}/sensors:
+  /loggers/{logger_serial_number}/sensors:
     get:
       summary: Get all sensors attached to a specific logger
       operationId: Get_Logger_Sensors
       security:
         - X_API_Key_Header: []
       parameters:
-        - $ref: '#/components/parameters/Logger_ID'
+        - $ref: '#/components/parameters/Logger_Serial_Number'
         - $ref: '#/components/parameters/Pagination_Limit'
         - $ref: '#/components/parameters/Pagination_Cursor'
       responses:
@@ -416,14 +416,10 @@ components:
     Logger:
       type: object
       required:
-        - id
         - company
         - loggerType
         - loggerSerialNumber
       properties:
-        id:
-          type: string
-          example: "logger-vimm-358299"
         company:
           type: string
           example: "VIMMS"
@@ -432,6 +428,7 @@ components:
           example: "VIMMS-LTE-v2"
         loggerSerialNumber:
           type: integer
+          format: int64
           example: 358299842
         loggerGroupIds:
           type: array
@@ -457,24 +454,22 @@ components:
     Sensor:
       type: object
       required:
-        - id
         - sensorType
         - sensorSerialNumber
-        - loggerId
+        - loggerSerialNumber
       properties:
-        id:
-          type: string
-          example: "sensor-accel-17834"
         sensorType:
           type: string
           example: "Triaxial Accelerometer"
         sensorSerialNumber:
           type: integer
+          format: int64
           example: 178340744
-        loggerId:
-          type: string
-          example: "logger-vimm-358299"
-          description: The parent logger resource managing this sensor configuration.
+        loggerSerialNumber:
+          type: integer
+          format: int64
+          example: 358299842
+          description: The parent physical logger managing this sensor configuration.
 
     Sensor_List_Response:
       type: object
@@ -969,10 +964,12 @@ components:
           description: The type or model of the sensor
         loggerSerialNumber:
           type: integer
+          format: int64
           description: The serial number of the logger
           nullable: true
         sensorSerialNumber:
           type: integer
+          format: int64
           description: The serial number of the sensor
       additionalProperties: false
 
@@ -1035,14 +1032,15 @@ components:
         example: "tunnel-north-zone"
       description: A client-defined unique text/string identifier for the logger group.
 
-    Logger_ID:
-      name: logger_id
+    Logger_Serial_Number:
+      name: logger_serial_number
       in: path
       required: true
       schema:
-        type: string
-        example: "logger-vimm-358299"
-      description: Unique text identifier representing a physical logger device.
+        type: integer
+        format: int64
+        example: 358299842
+      description: Unique physical serial number representing a logger device.
 
     Webhook_ID:
       name: webhook_id

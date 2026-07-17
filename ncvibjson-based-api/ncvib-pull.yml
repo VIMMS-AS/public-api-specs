@@ -5,6 +5,8 @@ info:
   version: 1.0.0
 
 servers:
+  - url: https://ncvib-pull.alarms.vimms.no/api/v1
+    description: Production Server
   - url: http://127.0.0.1:8080/api/v1
     description: Local development server
 
@@ -94,6 +96,92 @@ paths:
           $ref: '#/components/responses/Bad_Gateway'
         "503":
           $ref: '#/components/responses/Service_Temporarily_Unavailable'
+
+  /triggered-data:
+    get:
+      summary: Get a list of triggered data summaries
+      operationId: Get_Triggered_Data_List
+      description: Retrieve a paginated list of triggered data events/summaries.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - name: logger_group_id
+          in: query
+          required: false
+          description: Optional filter to return triggered data from loggers of a specific group.
+          schema:
+            type: string
+        - $ref: '#/components/parameters/Pagination_Limit'
+        - $ref: '#/components/parameters/Pagination_Cursor'
+        - name: from
+          in: query
+          required: false
+          description: Inclusive lower bound (items with timestamp >= this value). Omit to start from the earliest available item.
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          description: Exclusive upper bound (items with timestamp < this value). Omit for an open-ended range.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Successful retrieval of triggered data summaries
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TriggeredData_List_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
+
+  /triggered-data-count:
+    get:
+      summary: Get triggered data count
+      operationId: Get_Triggered_Data_Count
+      description: Retrieve the total number of triggered data events matching the filters.
+      security:
+        - X_API_Key_Header: []
+      parameters:
+        - name: logger_group_id
+          in: query
+          required: false
+          description: Optional filter to return triggered data from loggers of a specific group.
+          schema:
+            type: string
+        - name: from
+          in: query
+          required: false
+          description: Inclusive lower bound (items with timestamp >= this value). Omit to start from the earliest available item.
+          schema:
+            type: string
+            format: date-time
+        - name: to
+          in: query
+          required: false
+          description: Exclusive upper bound (items with timestamp < this value). Omit for an open-ended range.
+          schema:
+            type: string
+            format: date-time
+      responses:
+        "200":
+          description: Triggered data count
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Count_Response'
+        "401":
+          $ref: '#/components/responses/Unauthorized_Error'
+        "429":
+          $ref: '#/components/responses/Too_Many_Requests_Error'
+        "500":
+          $ref: '#/components/responses/Internal_Server_Error'
 
   # --- LOGGER GROUPS ---
   /logger-groups:
@@ -382,6 +470,7 @@ components:
       properties:
         description:
           type: string
+          maxLength: 2048
           example: "Loggers monitoring structural vibration near the north exit."
           description: Optional context or notes regarding this specific logger group.
 
@@ -599,6 +688,58 @@ components:
           minimum: 5000
           maximum: 86400000
           default: 86400000
+
+    TriggeredData_Summary:
+      type: object
+      required:
+        - id
+        - url
+        - measured_quantity
+        - timestamp
+        - logger_serial_number
+        - standard
+      properties:
+        id:
+          type: string
+          example: "VIMMS|Velocity|358299840367029|1783937696611|0|NS 8141-1:2022"
+        url:
+          type: string
+          format: uri
+          example: "https://ncvib-pull.alarms.vimms.no/api/v1/triggered-data/VIMMS%7CVelocity%7C358299840367029%7C1783937696611%7C0%7CNS%208141-1%3A2022"
+        measured_quantity:
+          type: string
+          example: "Velocity"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2026-07-13T10:14:57.899781+00:00"
+        logger_serial_number:
+          type: integer
+          format: int64
+          example: 358299840367029
+        sensor_serial_number:
+          type: integer
+          format: int64
+          example: 1783407441113
+          nullable: true
+        standard:
+          type: string
+          example: "NS 8141-1:2022"
+
+    TriggeredData_List_Response:
+      type: object
+      description: Cursor paginated list of triggered data summaries.
+      required:
+        - items
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/TriggeredData_Summary'
+        next_cursor:
+          type: string
+          description: Cursor for the next page. Omitted if there are no more results.
+          nullable: true
 
     Count_Response:
       type: object
